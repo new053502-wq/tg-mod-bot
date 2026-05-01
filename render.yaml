@@ -3,8 +3,8 @@ services:
     name: telegram-modbot
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    buildCommand: pip install -r telegram-bot/requirements.txt
+    startCommand: python telegram-bot/main.py
     autoDeploy: true
     healthCheckPath: /health
     envVars:
