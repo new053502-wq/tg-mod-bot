@@ -1,35 +1,57 @@
 import os
-from flask import Flask
-from telegram.ext import Application
+from flask import Flask, request
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
+import asyncio
 
 app = Flask(__name__)
 
-# HEALTH CHECK (Render ke liye zaroori)
-@app.route("/health")
-def health():
-    return {"status": "ok"}
+TOKEN = os.getenv("BOT_TOKEN")
+
+# ---------------- TELEGRAM BOT ----------------
+
+application = Application.builder().token(TOKEN).build()
+
+# simple /start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot is running ✅")
+
+application.add_handler(CommandHandler("start", start))
+
+# ---------------- WEBHOOK ROUTE ----------------
 
 @app.route("/")
 def home():
     return "Bot is running"
 
-# TELEGRAM BOT START
-def run_bot():
-    token = os.getenv("BOT_TOKEN")
+@app.route("/health")
+def health():
+    return {"status": "ok"}
 
-    if not token:
-        print("BOT_TOKEN missing")
-        return
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.get_json(force=True)
 
-    application = Application.builder().token(token).build()
+    update = Update.de_json(data, application.bot)
 
-    print("Bot started")
-    application.run_polling()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(application.process_update(update))
 
-if __name__ == "__main__":
-    from threading import Thread
+    return "ok"
 
-    Thread(target=run_bot).start()
+# ---------------- START SERVER ----------------
+
+def run():
+    print("Bot starting...")
+
+    # webhook set automatically
+    if os.getenv("RENDER_EXTERNAL_URL"):
+        url = os.getenv("RENDER_EXTERNAL_URL") + "/webhook"
+        print("Webhook mode:", url)
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    run()
