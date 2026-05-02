@@ -1,14 +1,7 @@
 services:
   - type: web
-    name: telegram-modbot
-    runtime: python
+    name: tg-mod-bot
+    env: python
     plan: free
-    buildCommand: pip install -r telegram-bot/requirements.txt
-    startCommand: python telegram-bot/main.py
-    autoDeploy: true
-    healthCheckPath: /health
-    envVars:
-      - key: BOT_TOKEN
-        sync: false
-      - key: OWNER_ID
-        sync: false
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
